@@ -1,0 +1,25 @@
+[Unit]
+Description=%p
+Requires=docker.service
+After=docker.service
+
+BindsTo=petclinic@%i.service
+Requires=petclinic@%i.service
+After=petclinic@%i.service
+
+[Service]
+User=core
+EnvironmentFile=/etc/environment
+
+ExecStartPre=-/usr/bin/etcdctl mkdir /demo/instances/petclinic
+
+ExecStart=/bin/sh -c "sleep 1; \
+  while true; do \
+    etcdctl set /demo/instances/$(echo $i | cut -f3 -d-)/petclinic/$(echo %i | cut -f1 -d-)/$(echo %i | cut -f2 -d-) \ \"$COREOS_PRIVATE_IPV4:$(docker port petclinic-%i | cut -f2 -d:)\" --ttl 60; \
+    sleep 45; \
+  done"
+
+ExecStop=/bin/sh -c "/usr/bin/etcdctl rm --recursive /demo/instances/$(echo $i | cut -f3 -d-)/petclinic/$(echo %i | cut -f1 -d-)/$(echo %i | cut -f2 -d-)"
+
+[X-Fleet]
+MachineOf=petclinic@%i.service

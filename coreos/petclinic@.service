@@ -10,13 +10,12 @@ User=core
 EnvironmentFile=/etc/environment
 TimeoutStartSec=30m
 
-ExecStartPre=-/usr/bin/docker kill %p
-ExecStartPre=-/usr/bin/docker rm %p
+ExecStartPre=-/usr/bin/docker kill %p-%i
+ExecStartPre=-/usr/bin/docker rm %p-%i
 ExecStartPre=/usr/bin/docker pull wouterla/docker-petclinic:latest
 
 ExecStart=/bin/sh -c "\
     /usr/bin/docker run \
-          -p 8080:8080 \
-          --name %p wouterla/docker-petclinic:latest"
+          --name %p-%i wouterla/docker-petclinic:latest"
 
-ExecStop=/usr/bin/docker stop %p
+ExecStop=/usr/bin/docker stop %p-%i
