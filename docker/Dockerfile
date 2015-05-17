@@ -5,4 +5,6 @@ RUN curl -L http://repo2.maven.org/maven2/org/mortbay/jetty/jetty-runner/8.1.9.v
 
 ADD petclinic.war ./
 
+EXPOSE 8080
+
 CMD java -jar jetty-runner.jar petclinic.war
