@@ -19,3 +19,6 @@ ExecStart=/bin/sh -c "\
           --name %p-%i wouterla/docker-petclinic:latest"
 
 ExecStop=/usr/bin/docker stop %p-%i
+
+[X-Fleet]
+Conflicts=petclinic@*.service
