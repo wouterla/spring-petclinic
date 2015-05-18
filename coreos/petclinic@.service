@@ -16,6 +16,7 @@ ExecStartPre=/usr/bin/docker pull wouterla/docker-petclinic:latest
 
 ExecStart=/bin/sh -c "\
     /usr/bin/docker run \
+          -p 8080 \
           --name %p-%i wouterla/docker-petclinic:latest"
 
 ExecStop=/usr/bin/docker stop %p-%i
