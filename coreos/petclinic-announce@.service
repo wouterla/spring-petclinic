@@ -11,13 +11,11 @@ After=petclinic@%i.service
 User=core
 EnvironmentFile=/etc/environment
 
-ExecStartPre=-/usr/bin/etcdctl mkdir /demo/instances/$(echo $i | cut -f3 -d-)/petclinic
-
 ExecStart=/bin/sh -c "sleep 1; \
   while true; do \
     export VERSION_DIR=/demo/instances/$(echo $i | cut -f3 -d-)/petclinic/$(echo %i | cut -f1 -d-) \
     /usr/bin/etcdctl mkdir $VERSION_DIR \
-    etcdctl set $VERSION_DIR/$(echo %i | cut -f2 -d-) \ \"$COREOS_PRIVATE_IPV4:$(docker port petclinic-%i | cut -f2 -d:)\" --ttl 60; \
+    /usr/bin/etcdctl set $VERSION_DIR/$(echo %i | cut -f2 -d-) \ \"$COREOS_PRIVATE_IPV4:$(docker port petclinic-%i | cut -f2 -d:)\" --ttl 60; \
     sleep 45; \
   done"
 
