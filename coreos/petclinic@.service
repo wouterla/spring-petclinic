@@ -20,5 +20,5 @@ ExecStart=/bin/sh -c "\
 
 ExecStop=/usr/bin/docker stop %p-%i
 
-[X-Fleet]
-Conflicts=petclinic@*.service
+#[X-Fleet]
+#Conflicts=petclinic@*.service
