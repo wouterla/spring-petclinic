@@ -13,13 +13,14 @@ EnvironmentFile=/etc/environment
 
 ExecStart=/bin/sh -c "sleep 1; \
   while true; do \
-    export VERSION_DIR=/demo/instances/$(echo $i | cut -f3 -d-)/petclinic/$(echo %i | cut -f1 -d-) \
-    /usr/bin/etcdctl mkdir $VERSION_DIR \
+    export VERSION_DIR=/demo/instances/$(echo %i | cut -f3 -d-)/petclinic/$(echo %i | cut -f1 -d-) ; \
+    echo '%i'; \
+    /usr/bin/etcdctl mkdir $VERSION_DIR ; \
     /usr/bin/etcdctl set $VERSION_DIR/$(echo %i | cut -f2 -d-) $COREOS_PRIVATE_IPV4:$(docker port petclinic-%i | cut -f2 -d:) --ttl 60; \
     sleep 45; \
   done"
 
-ExecStop=/bin/sh -c "/usr/bin/etcdctl rm --recursive /demo/instances/$(echo $i | cut -f3 -d-)/petclinic/$(echo %i | cut -f1 -d-)/$(echo %i | cut -f2 -d-)"
+ExecStop=/bin/sh -c "/usr/bin/etcdctl rm --recursive /demo/instances/$(echo %i | cut -f3 -d-)/petclinic/$(echo %i | cut -f1 -d-)/$(echo %i | cut -f2 -d-)"
 
 [X-Fleet]
 MachineOf=petclinic@%i.service
