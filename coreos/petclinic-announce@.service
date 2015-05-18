@@ -11,7 +11,7 @@ After=petclinic@%i.service
 User=core
 EnvironmentFile=/etc/environment
 
-ExecStartPre=-/usr/bin/etcdctl mkdir /demo/instances/petclinic
+ExecStartPre=-/usr/bin/etcdctl mkdir /demo/instances/$(echo $i | cut -f3 -d-)/petclinic
 
 ExecStart=/bin/sh -c "sleep 1; \
   while true; do \
