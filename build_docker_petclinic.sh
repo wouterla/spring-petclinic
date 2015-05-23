@@ -3,7 +3,7 @@ echo "building petclinic"
 mvn clean install
 
 echo "Copying docker files"
-cp docker/Dockerfile target/
+cp docker/* target/
 
 echo "Building Docker image"
 cd target/
