@@ -22,9 +22,9 @@ node {
 
       echo "Running docker"
       cd target/
-      docker -H $DOCKER_HOST build -t wouterla/docker-petclinic .
+      docker $DOCKER_HOST build -t wouterla/docker-petclinic .
 
       echo "Pushing docker image to repository"
-      #docker -H $DOCKER_HOST push wouterla/docker-petclinic
+      #docker $DOCKER_HOST push wouterla/docker-petclinic
     '''
 }
