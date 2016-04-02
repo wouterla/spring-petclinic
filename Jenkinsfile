@@ -1,4 +1,5 @@
 def name = 'spring-petclinic'
+def docker_config = env.DOCKER_HOST
 
 node {
   stage 'Build and Test'
@@ -24,10 +25,10 @@ node {
 
       echo "Running docker"
       cd target/
-      docker ${DOCKER_HOST} build -t wouterla/${name} .
+      docker ${docker_config} build -t wouterla/${name} .
 
       echo "Pushing docker image to repository"
-      #docker ${DOCKER_HOST} push wouterla/${name}
+      #docker ${docker_config} push wouterla/${name}
     """
 }
 
@@ -40,19 +41,19 @@ node {
 
     # Ensure network exists
     env="test"
-    if docker $DOCKER_HOST network inspect ${env};
+    if docker ${docker_config} network inspect ${env};
     then
       echo "network ${env} Found";
     else
-      docker $DOCKER_HOST network create ${env};
+      docker ${docker_config} network create ${env};
     fi;
 
     # For now, ensure that the container is removed. Should not be done in
     # production, but makes testing the pipeline much easier
-    docker $DOCKER_HOST stop ${name}-${env}-$PIPELINE_GIT_HASH
-    docker $DOCKER_HOST rm  ${name}-${env}-$PIPELINE_GIT_HASH
+    docker ${docker_config} stop ${name}-${env}-$PIPELINE_GIT_HASH
+    docker ${docker_config} rm  ${name}-${env}-$PIPELINE_GIT_HASH
 
-    docker $DOCKER_HOST run --net=${env} -d --expose 8080 \
+    docker ${docker_config} run --net=${env} -d --expose 8080 \
       --label servicename=${name} \
       --label serviceversion=$PIPELINE_GIT_HASH \
       --label serviceenv=${env} \
