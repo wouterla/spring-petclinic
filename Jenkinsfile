@@ -11,7 +11,7 @@ node {
 
 node {
   stage 'Create Docker Image'
-  sh '''
+  sh """\
       #!/bin/bash
       set -x
       set +e
@@ -28,12 +28,12 @@ node {
 
       echo "Pushing docker image to repository"
       #docker $DOCKER_HOST push wouterla/${name}
-    '''
+    """
 }
 
 node {
   stage 'Deploy Test'
-  sh '''
+  sh """\
     #!/bin/bash
     set -x
     set +e
@@ -58,5 +58,5 @@ node {
       --label serviceenv=${env} \
       --name ${name}-${env}-$PIPELINE_GIT_HASH \
       -t wouterla/docker-${name}
-  '''
+  """
 }
