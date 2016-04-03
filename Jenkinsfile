@@ -9,7 +9,7 @@ node {
   env.PATH = "${tool 'default'}/bin:${env.PATH}"
   git_commit = getGitHash();
 
-//  sh 'mvn clean install'
+  sh 'mvn clean install'
 }
 
 node {
