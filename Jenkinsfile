@@ -1,4 +1,4 @@
-def name = 'spring-petclinic'
+def name = 'petclinic'
 def git_commit = ""
 
 node {
@@ -24,60 +24,17 @@ node {
 
 node {
   stage "Release Test"
-  def docker_config = getDockerConfig()
-  def docker_ip = getDockerIP()
-  def short_hash = getShortGitHash()
-  def env = "test"
+  release(getDockerConfig(), getDockerIP(), getShortGitHash(), name, 'test')
+}
 
-  sh """\
-    #!/bin/bash
-    set -x
-    set -e
+node {
+  stage 'Deploy Production'
+  deploy(getDockerConfig(), getShortGitHash(), name, 'production')
+}
 
-    export BACKEND=${name}-${env}-${short_hash}
-    export ENV=${env}
-    #export ETCDCTL_PEERS=http://etcd-${env}.${env}:4001
-    export ETCDCTL_PEERS=${docker_ip}:4001
-    echo "BACKEND=\$BACKEND"
-
-    # Temporarily connect to the {env} network so we can talk to etcd
-    # Could be replaced by a pre-configured ip address for test, but
-    # that would be less flexible.
-    set +e # If this fails, we're already connected?
-    docker ${docker_config} network connect ${env} jenkins
-    set -e
-
-    # Ensure backend exists
-    etcdctl set /vulcand/backends/\$BACKEND/backend '{"Type": "http"}'
-
-    # Add new servers
-    # Gather endpoints
-    # Find all containers with the service and versions labels we want
-    CONTAINERS=\$(docker ${docker_config} ps --filter=label=servicename=${name} \
-      --filter=label=serviceversion=${short_hash} \
-      --filter=label=serviceenv=${env} \
-      --format={{.ID}})
-
-    COUNT=0
-    for CONTAINER in \$CONTAINERS; do
-      IP=\$(docker ${docker_config} inspect --format='{{json .NetworkSettings.Networks.${env}.IPAddress}}' \$CONTAINER | tr -d '"')
-      #PORT=\$(docker ${docker_config} inspect --format='{{(index (index .NetworkSettings.Ports "8080/tcp") 0).HostPort}}' \$CONTAINER)
-      PORT=8080
-
-      echo "Adding \$CONTAINER with IP=\$IP and PORT=\$PORT as server for ${name}, ${short_hash}"
-
-      COUNT=\$((COUNT+1))
-      etcdctl set /vulcand/backends/\$BACKEND/servers/srv\$COUNT '{"URL": "http://'\$IP':'\$PORT'"}'
-    done
-    echo "Instances added: \$COUNT"
-
-    # Set up frontend
-    etcdctl set /vulcand/frontends/${name}-${env}/frontend '{{"Type": "http", "BackendId": "'\$BACKEND'", "Route": "Host(`${name}.${env}`) && PathRegexp(`/.*`)"}}'
-    # Above should be extended to "Route": "Host("<servicename>") && PathRegexp(\"/.*\")" ? And also add Method (GET/POST)?
-
-    # Disconnect from {env} network again
-    docker ${docker_config} network disconnect ${env} jenkins
-  """
+node {
+  stage "Release Production"
+  release(getDockerConfig(), getDockerIP(), getShortGitHash(), name, 'production')
 }
 
 def getGitHash() {
@@ -156,4 +113,59 @@ def deploy(docker_config, version_hash, name, env) {
       --name ${name}-${env}-${version_hash} \
       -t wouterla/${name}
   """
+}
+
+def release(docker_config, docker_ip, version_hash, name, env) {
+  echo "Releasing ${name}:${version_hash} on ${env}"
+
+  sh """\
+    #!/bin/bash
+    set -x
+    set -e
+
+    export BACKEND=${name}-${env}-${version_hash}
+    export ENV=${env}
+    #export ETCDCTL_PEERS=http://etcd-${env}.${env}:4001
+    export ETCDCTL_PEERS=${docker_ip}:4001
+    echo "BACKEND=\$BACKEND"
+
+    # Temporarily connect to the {env} network so we can talk to etcd
+    # Could be replaced by a pre-configured ip address for test, but
+    # that would be less flexible.
+    set +e # If this fails, we're already connected?
+    docker ${docker_config} network connect ${env} jenkins
+    set -e
+
+    # Ensure backend exists
+    etcdctl set /vulcand/backends/\$BACKEND/backend '{"Type": "http"}'
+
+    # Add new servers
+    # Gather endpoints
+    # Find all containers with the service and versions labels we want
+    CONTAINERS=\$(docker ${docker_config} ps --filter=label=servicename=${name} \
+      --filter=label=serviceversion=${version_hash} \
+      --filter=label=serviceenv=${env} \
+      --format={{.ID}})
+
+    COUNT=0
+    for CONTAINER in \$CONTAINERS; do
+      IP=\$(docker ${docker_config} inspect --format='{{json .NetworkSettings.Networks.${env}.IPAddress}}' \$CONTAINER | tr -d '"')
+      #PORT=\$(docker ${docker_config} inspect --format='{{(index (index .NetworkSettings.Ports "8080/tcp") 0).HostPort}}' \$CONTAINER)
+      PORT=8080
+
+      echo "Adding \$CONTAINER with IP=\$IP and PORT=\$PORT as server for ${name}, ${version_hash}"
+
+      COUNT=\$((COUNT+1))
+      etcdctl set /vulcand/backends/\$BACKEND/servers/srv\$COUNT '{"URL": "http://'\$IP':'\$PORT'"}'
+    done
+    echo "Instances added: \$COUNT"
+
+    # Set up frontend
+    etcdctl set /vulcand/frontends/${name}-${env}/frontend '{{"Type": "http", "BackendId": "'\$BACKEND'", "Route": "Host(`${name}.${env}`) && PathRegexp(`/.*`)"}}'
+    # Above should be extended to "Route": "Host("<servicename>") && PathRegexp(\"/.*\")" ? And also add Method (GET/POST)?
+
+    # Disconnect from {env} network again
+    docker ${docker_config} network disconnect ${env} jenkins
+  """
+
 }
