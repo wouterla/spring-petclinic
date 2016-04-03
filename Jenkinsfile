@@ -161,7 +161,7 @@ def release(docker_config, docker_ip, version_hash, name, env) {
     echo "Instances added: \$COUNT"
 
     # Set up frontend
-    etcdctl set /vulcand/frontends/${name}-${env}/frontend '{{"Type": "http", "BackendId": "'\$BACKEND'", "Route": "Host(`${name}.${env}`) && PathRegexp(`/.*`)"}}'
+    etcdctl set /vulcand/frontends/${name}-${env}/frontend '{"Type": "http", "BackendId": "'\$BACKEND'", "Route": "Host(`${name}.${env}`) && PathRegexp(`/.*`)"}'
     # Above should be extended to "Route": "Host("<servicename>") && PathRegexp(\"/.*\")" ? And also add Method (GET/POST)?
 
     # Disconnect from {env} network again
